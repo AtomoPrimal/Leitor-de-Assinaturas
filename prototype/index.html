@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leitor de Documentos Assinados — Protótipo Interativo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-app: #0F172A;
+      --phone-bg: #F8FAFC;
+      --card-bg: #FFFFFF;
+      --primary: #2563EB;
+      --primary-hover: #1D4ED8;
+      --primary-light: #EFF6FF;
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+      --success: #10B981;
+      --success-light: #ECFDF5;
+      --warning: #F59E0B;
+      --warning-light: #FFFBEB;
+      --danger: #EF4444;
+      --danger-light: #FEF2F2;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -1px rgba(0,0,0,0.04);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 0%, #1E293B 0%, #0F172A 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    /* Container do telefone */
+    .phone-wrapper {
+      width: 100%;
+      max-width: 412px;
+      height: 844px;
+      background: var(--phone-bg);
+      border-radius: 40px;
+      box-shadow: 0 25px 60px -15px rgba(0,0,0,0.5), 0 0 0 12px #1E293B, 0 0 0 14px #334155;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Barra de status superior */
+    .status-bar {
+      height: 38px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      z-index: 50;
+      background: rgba(248, 250, 252, 0.9);
+      backdrop-filter: blur(8px);
+    }
+
+    .notch {
+      width: 120px;
+      height: 20px;
+      background: #0F172A;
+      border-bottom-left-radius: 12px;
+      border-bottom-right-radius: 12px;
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    /* Header do Aplicativo */
+    .app-header {
+      padding: 12px 20px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 40;
+    }
+
+    .app-header h1 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge-onnx {
+      font-size: 11px;
+      padding: 4px 8px;
+      background: var(--success-light);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: 20px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    /* Conteúdo das Telas */
+    .screen-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .screen-content::-webkit-scrollbar {
+      display: none;
+    }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards e Containers */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Viewport da Câmera */
+    .camera-container {
+      position: relative;
+      width: 100%;
+      height: 290px;
+      background: #000;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-md);
+    }
+
+    video#webcam {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* espelhar a webcam */
+    }
+
+    canvas#overlay-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .camera-guide-box {
+      position: absolute;
+      width: 82%;
+      height: 75%;
+      border: 2px dashed rgba(255, 255, 255, 0.7);
+      border-radius: 12px;
+      pointer-events: none;
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.35);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 12px;
+    }
+
+    .guide-tag {
+      background: rgba(15, 23, 42, 0.8);
+      color: #FFF;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 6px;
+      align-self: center;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Botões */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #FFF;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: #F1F5F9;
+      color: var(--text-main);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: #E2E8F0;
+    }
+
+    .btn-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* Slider de Confiança */
+    .slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-main);
+    }
+
+    .slider-header span.val {
+      font-weight: 700;
+      color: var(--primary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      background: #E2E8F0;
+      border-radius: 4px;
+      outline: none;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(37,99,235,0.4);
+      border: 2px solid #FFF;
+    }
+
+    /* Card Hero de Status (Tela 2) */
+    .hero-status {
+      padding: 16px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      animation: popIn 0.25s ease-out;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.96); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .hero-status.signed {
+      background: var(--success-light);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #065F46;
+    }
+
+    .hero-status.unsigned {
+      background: var(--warning-light);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #92400E;
+    }
+
+    .hero-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .hero-status.signed .hero-icon {
+      background: #D1FAE5;
+      color: var(--success);
+    }
+
+    .hero-status.unsigned .hero-icon {
+      background: #FEF3C7;
+      color: var(--warning);
+    }
+
+    .hero-text h3 {
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .hero-text p {
+      font-size: 12px;
+      opacity: 0.85;
+      margin-top: 2px;
+    }
+
+    /* Grid de Métricas */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .metric-box {
+      background: #F8FAFC;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px;
+      text-align: center;
+    }
+
+    .metric-val {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--primary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      font-weight: 500;
+    }
+
+    /* Imagem Anotada */
+    .annotated-box {
+      position: relative;
+      width: 100%;
+      height: 250px;
+      background: #0F172A;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .annotated-box img, .annotated-box canvas {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    /* Lista de Histórico */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .history-item {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .history-item:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .history-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .history-id {
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--text-main);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .history-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    .history-badge.signed {
+      background: var(--success-light);
+      color: var(--success);
+    }
+
+    .history-badge.unsigned {
+      background: var(--warning-light);
+      color: var(--warning);
+    }
+
+    .history-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Detalhamento Geométrico (Tela 4) */
+    .box-audit-card {
+      background: #F8FAFC;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      margin-bottom: 8px;
+    }
+
+    .box-audit-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--primary);
+    }
+
+    .box-audit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .audit-prop {
+      color: var(--text-muted);
+    }
+
+    .audit-val {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    /* Bottom Navigation Bar */
+    .bottom-nav {
+      height: 64px;
+      background: var(--card-bg);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 16px;
+      z-index: 50;
+    }
+
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 8px 24px;
+      border-radius: 12px;
+      transition: all 0.15s ease;
+    }
+
+    .nav-btn svg {
+      width: 22px;
+      height: 22px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .nav-btn.active {
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    /* Info lateral para desktop */
+    .info-pane {
+      margin-top: 20px;
+      color: #94A3B8;
+      font-size: 13px;
+      text-align: center;
+      max-width: 440px;
+      line-height: 1.5;
+    }
+
+    .info-pane strong {
+      color: #F8FAFC;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Mockup do Celular -->
+  <div class="phone-wrapper">
+    <div class="notch"></div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <span id="current-clock">12:00</span>
+      <div style="display: flex; gap: 6px; align-items: center;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L12 22l7.03-4.39C20.26 16.07 21 14.12 21 12c0-4.97-4.03-9-9-9z"/></svg>
+        <span style="font-size: 11px;">100%</span>
+      </div>
+    </div>
+
+    <!-- App Header -->
+    <header class="app-header">
+      <h1 id="header-title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+        Leitor de Assinaturas
+      </h1>
+      <div class="badge-onnx">
+        <div class="badge-dot"></div>
+        <span>YOLOv8s ONNX</span>
+      </div>
+    </header>
+
+    <!-- Conteúdo Scrollável -->
+    <div class="screen-content">
+
+      <!-- ================= TELA 1: DETECTAR / ENTRADA ================= -->
+      <section id="screen-1" class="screen active">
+        <!-- Viewport da Câmera -->
+        <div class="camera-container">
+          <video id="webcam" autoplay playsinline muted></video>
+          <div class="camera-guide-box">
+            <span class="guide-tag">Enquadre o documento aqui</span>
+            <span class="guide-tag" style="font-size: 9px; opacity: 0.8;">Câmera Ativa do Notebook</span>
+          </div>
+        </div>
+
+        <!-- Botões de Ação de Captura -->
+        <div class="btn-group">
+          <button class="btn btn-primary" id="btn-snap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+            Tirar Foto
+          </button>
+          <label class="btn btn-secondary" style="cursor: pointer;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Galeria
+            <input type="file" id="file-input" accept="image/*" style="display: none;">
+          </label>
+        </div>
+
+        <!-- Card de Configuração do Modelo e Slider -->
+        <div class="card">
+          <div class="card-title">
+            <span>Parâmetros de Inferência</span>
+            <span style="font-size: 11px; color: var(--success); font-weight: 600;">RF3 / RF1</span>
+          </div>
+
+          <div class="slider-row">
+            <div class="slider-header">
+              <span>Limiar de Confiança (Confidence)</span>
+              <span class="val" id="conf-val">45%</span>
+            </div>
+            <input type="range" id="conf-slider" min="15" max="90" value="45">
+          </div>
+
+          <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-size: 12px;">
+              <div style="font-weight: 600; color: var(--text-main);">best.onnx (Embarcado)</div>
+              <div style="color: var(--text-muted); font-size: 11px;">Tamanho de Entrada: 640x640</div>
+            </div>
+            <button class="btn btn-secondary" style="padding: 6px 10px; font-size: 11px;" onclick="alert('RF1: No aplicativo Android, este botão aciona o Storage Picker para carregar qualquer arquivo .onnx externo.')">
+              Alterar .onnx
+            </button>
+          </div>
+        </div>
+
+        <!-- Botão Executar Inferência -->
+        <button class="btn btn-primary" id="btn-run-inference" style="padding: 14px; font-size: 15px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Executar Análise do Documento
+        </button>
+      </section>
+
+      <!-- ================= TELA 2: RESULTADOS ================= -->
+      <section id="screen-2" class="screen">
+        <!-- Hero Status Banner -->
+        <div id="hero-banner" class="hero-status signed">
+          <div class="hero-icon" id="hero-icon">✓</div>
+          <div class="hero-text">
+            <h3 id="hero-title">DOCUMENTO ASSINADO</h3>
+            <p id="hero-desc">1 assinatura identificada com sucesso</p>
+          </div>
+        </div>
+
+        <!-- Métricas Rápidas -->
+        <div class="metrics-grid">
+          <div class="metric-box">
+            <div class="metric-val" id="metric-count">1</div>
+            <div class="metric-label">Assinaturas</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-val" id="metric-conf">92%</div>
+            <div class="metric-label">Confiança</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-val" id="metric-time">38ms</div>
+            <div class="metric-label">Local NPU</div>
+          </div>
+        </div>
+
+        <!-- Imagem Anotada com Caixas e Centróides -->
+        <div class="card" style="padding: 12px;">
+          <div class="card-title">
+            <span>Imagem Anotada (Bounding Boxes)</span>
+            <span style="font-size: 10px; color: var(--primary);">Toque para expandir</span>
+          </div>
+          <div class="annotated-box">
+            <canvas id="result-canvas"></canvas>
+          </div>
+        </div>
+
+        <!-- Ações da Tela 2 -->
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="btn-back-camera">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Nova Análise
+          </button>
+          <button class="btn btn-primary" id="btn-goto-audit">
+            Ver Auditoria
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- ================= TELA 3: HISTÓRICO ================= -->
+      <section id="screen-3" class="screen">
+        <div class="card" style="padding: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 14px; font-weight: 700; color: var(--text-main);">Histórico de Auditorias</div>
+              <div style="font-size: 11px; color: var(--text-muted);">Sincronizado com API Ktor</div>
+            </div>
+            <span class="badge-onnx" style="color: var(--primary); background: var(--primary-light); border-color: rgba(37,99,235,0.2);">
+              REST JSON
+            </span>
+          </div>
+        </div>
+
+        <div class="history-list" id="history-items-container">
+          <!-- Injetado dinamicamente via JS -->
+        </div>
+      </section>
+
+      <!-- ================= TELA 4: DETALHAMENTO GEOMÉTRICO ================= -->
+      <section id="screen-4" class="screen">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <button class="btn btn-secondary" id="btn-back-history" style="padding: 6px 12px; font-size: 12px;">
+            ← Voltar
+          </button>
+          <div style="font-size: 13px; font-weight: 700; color: var(--text-main);" id="audit-session-title">
+            Sessão #20260928_001
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span>Métricas Geométricas Obrigatórias (RF5)</span>
+          </div>
+          <div id="boxes-audit-container">
+            <!-- Injetado dinamicamente -->
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="btn-export-json" style="padding: 12px; font-size: 13px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Ver Payload JSON do Professor
+        </button>
+      </section>
+
+    </div>
+
+    <!-- Bottom Navigation Bar (Fiel ao enunciado RF8) -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" id="nav-detect">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+        Detectar
+      </button>
+      <button class="nav-btn" id="nav-history">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Histórico
+      </button>
+    </nav>
+  </div>
+
+  <div class="info-pane">
+    💡 <strong>Protótipo Interativo Web (Skill Prototype)</strong><br>
+    Este protótipo reproduz com 100% de fidelidade o Design System Light Mode e as 4 telas exigidas no <strong>enunciado.pdf</strong>. Ele utiliza sua webcam ou fotos reais para simular a detecção do modelo YOLOv8 ONNX e os cálculos geométricos de centróides e áreas.
+  </div>
+
+  <script>
+    // Atualiza relógio
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('current-clock').textContent = 
+        now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    }
+    updateClock();
+    setInterval(updateClock, 10000);
+
+    // Gerenciador de Webcam
+    const video = document.getElementById('webcam');
+    let streamActive = false;
+
+    async function initWebcam() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "environment" }
+        });
+        video.srcObject = stream;
+        streamActive = true;
+      } catch (err) {
+        console.warn("Webcam não acessível ou permissão negada, usando canvas simulado.", err);
+        drawFallbackCamera();
+      }
+    }
+    initWebcam();
+
+    function drawFallbackCamera() {
+      // Cria imagem demonstrativa caso a webcam não esteja disponível
+      const canvas = document.createElement('canvas');
+      canvas.width = 640;
+      canvas.height = 480;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = "#E2E8F0";
+      ctx.fillRect(0, 0, 640, 480);
+      ctx.fillStyle = "#0F172A";
+      ctx.font = "bold 20px Inter";
+      ctx.fillText("Simulação de Câmera (Documento)", 160, 240);
+    }
+
+    // Slider de confiança
+    const slider = document.getElementById('conf-slider');
+    const confVal = document.getElementById('conf-val');
+    slider.addEventListener('input', (e) => {
+      confVal.textContent = e.target.value + '%';
+    });
+
+    // Estado da Aplicação
+    let currentInference = null;
+    let mockHistory = [
+      {
+        id: "sessao_20260928_001",
+        date: "28/09/2026 às 19:42",
+        model: "best.onnx",
+        signed: true,
+        count: 2,
+        avgConf: 94.5,
+        timeMs: 42,
+        imgWidth: 1080,
+        imgHeight: 1920,
+        boxes: [
+          { id: 1, label: "signature", conf: 0.96, w: 240, h: 90, xMin: 320, yMin: 1240 },
+          { id: 2, label: "signature", conf: 0.93, w: 210, h: 85, xMin: 610, yMin: 1250 }
+        ]
+      },
+      {
+        id: "sessao_20260928_002",
+        date: "28/09/2026 às 20:15",
+        model: "best.onnx",
+        signed: false,
+        count: 0,
+        avgConf: 0,
+        timeMs: 35,
+        imgWidth: 1080,
+        imgHeight: 1920,
+        boxes: []
+      }
+    ];
+
+    // Navegação entre Telas
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+
+      const isHistory = (screenId === 'screen-3' || screenId === 'screen-4');
+      document.getElementById('nav-detect').classList.toggle('active', !isHistory);
+      document.getElementById('nav-history').classList.toggle('active', isHistory);
+    }
+
+    document.getElementById('nav-detect').addEventListener('click', () => showScreen('screen-1'));
+    document.getElementById('nav-history').addEventListener('click', () => {
+      renderHistoryList();
+      showScreen('screen-3');
+    });
+
+    // Capturar foto e Rodar Inferência
+    const capturedCanvas = document.createElement('canvas');
+    let capturedImage = null;
+
+    function captureCurrentFrame() {
+      capturedCanvas.width = video.videoWidth || 640;
+      capturedCanvas.height = video.videoHeight || 480;
+      const ctx = capturedCanvas.getContext('2d');
+      // inverte se estiver espelhado
+      ctx.save();
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, -capturedCanvas.width, 0, capturedCanvas.width, capturedCanvas.height);
+      ctx.restore();
+      return capturedCanvas;
+    }
+
+    document.getElementById('btn-snap').addEventListener('click', () => {
+      executeInferenceSimulation();
+    });
+
+    document.getElementById('btn-run-inference').addEventListener('click', () => {
+      executeInferenceSimulation();
+    });
+
+    // Input de arquivo da galeria
+    document.getElementById('file-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            capturedCanvas.width = img.width;
+            capturedCanvas.height = img.height;
+            const ctx = capturedCanvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            executeInferenceSimulation(true);
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    function executeInferenceSimulation(fromFile = false) {
+      if (!fromFile) {
+        captureCurrentFrame();
+      }
+
+      const confThreshold = parseInt(slider.value) / 100;
+      const startTime = performance.now();
+
+      // Cálculo Geométrico e Análise (Simulação do Modelo YOLOv8 ONNX)
+      const w = capturedCanvas.width;
+      const h = capturedCanvas.height;
+
+      // Gera bounding box plausível na região inferior (onde ficam assinaturas)
+      const hasSignature = Math.random() > 0.25; // 75% chance de assinado para demonstração
+      const boxes = [];
+
+      if (hasSignature) {
+        const boxCount = Math.random() > 0.6 ? 2 : 1;
+        for (let i = 0; i < boxCount; i++) {
+          const bw = Math.round(w * (0.28 + Math.random() * 0.15));
+          const bh = Math.round(h * (0.10 + Math.random() * 0.08));
+          const bx = Math.round(w * (0.15 + i * 0.42));
+          const by = Math.round(h * (0.62 + Math.random() * 0.15));
+          const conf = +(0.85 + Math.random() * 0.12).toFixed(2);
+
+          if (conf >= confThreshold) {
+            boxes.push({
+              id: i + 1,
+              label: "signature",
+              conf: conf,
+              w: bw,
+              h: bh,
+              xMin: bx,
+              yMin: by
+            });
+          }
+        }
+      }
+
+      const timeTaken = Math.round(performance.now() - startTime + 38); // adiciona 38ms do tempo NPU
+
+      // Monta objeto da inferência
+      const now = new Date();
+      const pad = (n) => n.toString().padStart(2, '0');
+      const sessionId = `sessao_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(Math.floor(Math.random()*900)+100)}`;
+      const avgConf = boxes.length > 0 ? +(boxes.reduce((acc, b) => acc + b.conf, 0) / boxes.length * 100).toFixed(1) : 0;
+
+      currentInference = {
+        id: sessionId,
+        date: `${pad(now.getDate())}/${pad(now.getMonth()+1)} às ${pad(now.getHours())}:${pad(now.getMinutes())}`,
+        model: "best.onnx",
+        signed: boxes.length > 0,
+        count: boxes.length,
+        avgConf: avgConf,
+        timeMs: timeTaken,
+        imgWidth: w,
+        imgHeight: h,
+        boxes: boxes,
+        canvasCopy: capturedCanvas
+      };
+
+      // Adiciona ao histórico
+      mockHistory.unshift(currentInference);
+
+      // Renderiza Tela 2
+      renderResultScreen(currentInference);
+      showScreen('screen-2');
+    }
+
+    function renderResultScreen(data) {
+      const banner = document.getElementById('hero-banner');
+      const icon = document.getElementById('hero-icon');
+      const title = document.getElementById('hero-title');
+      const desc = document.getElementById('hero-desc');
+
+      if (data.signed) {
+        banner.className = "hero-status signed";
+        icon.textContent = "✓";
+        title.textContent = "DOCUMENTO ASSINADO";
+        desc.textContent = `${data.count} assinatura(s) encontrada(s) no documento`;
+      } else {
+        banner.className = "hero-status unsigned";
+        icon.textContent = "⚠️";
+        title.textContent = "DOCUMENTO NÃO ASSINADO";
+        desc.textContent = "Nenhuma assinatura identificada com a confiança mínima";
+      }
+
+      document.getElementById('metric-count').textContent = data.count;
+      document.getElementById('metric-conf').textContent = data.signed ? data.avgConf + '%' : '--';
+      document.getElementById('metric-time').textContent = data.timeMs + 'ms';
+
+      // Desenha imagem com Bounding Boxes no Canvas
+      const resultCanvas = document.getElementById('result-canvas');
+      resultCanvas.width = data.imgWidth;
+      resultCanvas.height = data.imgHeight;
+      const ctx = resultCanvas.getContext('2d');
+      ctx.drawImage(data.canvasCopy, 0, 0);
+
+      // Desenha as caixas e centróides (RF5)
+      data.boxes.forEach((box) => {
+        // Caixa delimitadora
+        ctx.strokeStyle = "#2563EB";
+        ctx.lineWidth = Math.max(4, Math.round(data.imgWidth / 250));
+        ctx.strokeRect(box.xMin, box.yMin, box.w, box.h);
+
+        // Fundo semitransparente
+        ctx.fillStyle = "rgba(37, 99, 235, 0.15)";
+        ctx.fillRect(box.xMin, box.yMin, box.w, box.h);
+
+        // Tag superior
+        const labelText = `signature ${(box.conf * 100).toFixed(0)}%`;
+        ctx.font = "bold " + Math.max(16, Math.round(data.imgWidth / 45)) + "px Inter";
+        const textWidth = ctx.measureText(labelText).width;
+        ctx.fillStyle = "#2563EB";
+        ctx.fillRect(box.xMin, box.yMin - 30, textWidth + 14, 30);
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillText(labelText, box.xMin + 7, box.yMin - 9);
+
+        // Centróide (RF5)
+        const cx = box.xMin + box.w / 2;
+        const cy = box.yMin + box.h / 2;
+        ctx.fillStyle = "#EF4444";
+        ctx.beginPath();
+        ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Mira do centróide
+        ctx.strokeStyle = "#EF4444";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx - 10, cy); ctx.lineTo(cx + 10, cy);
+        ctx.moveTo(cx, cy - 10); ctx.lineTo(cx, cy + 10);
+        ctx.stroke();
+      });
+    }
+
+    // Botões da Tela 2
+    document.getElementById('btn-back-camera').addEventListener('click', () => showScreen('screen-1'));
+    document.getElementById('btn-goto-audit').addEventListener('click', () => {
+      renderAuditScreen(currentInference);
+      showScreen('screen-4');
+    });
+
+    // Renderiza Tela 3: Histórico
+    function renderHistoryList() {
+      const container = document.getElementById('history-items-container');
+      container.innerHTML = '';
+
+      mockHistory.forEach((item) => {
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        div.innerHTML = `
+          <div class="history-top">
+            <span class="history-id">${item.id}</span>
+            <span class="history-badge ${item.signed ? 'signed' : 'unsigned'}">
+              ${item.signed ? 'Assinado (' + item.count + ')' : 'Não Assinado'}
+            </span>
+          </div>
+          <div class="history-meta">
+            <span>📅 ${item.date}</span>
+            <span>⚡ ${item.timeMs}ms</span>
+            <span style="color: var(--primary); font-weight: 600;">Ver detalhes →</span>
+          </div>
+        `;
+        div.addEventListener('click', () => {
+          renderAuditScreen(item);
+          showScreen('screen-4');
+        });
+        container.appendChild(div);
+      });
+    }
+
+    // Renderiza Tela 4: Auditoria Geométrica (RF5)
+    function renderAuditScreen(item) {
+      document.getElementById('audit-session-title').textContent = item.id;
+      const container = document.getElementById('boxes-audit-container');
+      container.innerHTML = '';
+
+      if (!item.boxes || item.boxes.length === 0) {
+        container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 20px; font-size: 13px;">Nenhuma assinatura detectada nesta sessão.</div>`;
+        return;
+      }
+
+      item.boxes.forEach((box, idx) => {
+        const cx = (box.xMin + box.w / 2).toFixed(1);
+        const cy = (box.yMin + box.h / 2).toFixed(1);
+        const area = (box.w * box.h).toFixed(1);
+
+        const card = document.createElement('div');
+        card.className = 'box-audit-card';
+        card.innerHTML = `
+          <div class="box-audit-header">
+            <span>Caixa #${String(idx + 1).padStart(2, '0')} (${box.label})</span>
+            <span>${(box.conf * 100).toFixed(1)}%</span>
+          </div>
+          <div class="box-audit-grid">
+            <div><span class="audit-prop">Largura (W):</span> <span class="audit-val">${box.w} px</span></div>
+            <div><span class="audit-prop">Altura (H):</span> <span class="audit-val">${box.h} px</span></div>
+            <div><span class="audit-prop">Centróide X:</span> <span class="audit-val">${cx} px</span></div>
+            <div><span class="audit-prop">Centróide Y:</span> <span class="audit-val">${cy} px</span></div>
+            <div style="grid-column: span 2; margin-top: 4px; padding-top: 4px; border-top: 1px dashed var(--border);">
+              <span class="audit-prop">Área da Caixa (W x H):</span> <span class="audit-val">${area} px²</span>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    document.getElementById('btn-back-history').addEventListener('click', () => {
+      renderHistoryList();
+      showScreen('screen-3');
+    });
+
+    // Exibir Payload JSON do Professor
+    document.getElementById('btn-export-json').addEventListener('click', () => {
+      if (!currentInference) return;
+      const payload = {
+        id_sessao: currentInference.id,
+        data_hora: new Date().toISOString(),
+        nome_modelo: currentInference.model,
+        tempo_execucao_ms: currentInference.timeMs,
+        total_objetos: currentInference.count,
+        confianca_media: currentInference.avgConf / 100,
+        dimensao_imagem: { largura_px: currentInference.imgWidth, altura_px: currentInference.imgHeight },
+        caixas_delimitadoras: currentInference.boxes.map((b, i) => ({
+          id_caixa: i + 1,
+          rotulo_classe: b.label,
+          confianca: b.conf,
+          largura_px: b.w,
+          altura_px: b.h,
+          centroide_x: b.xMin + b.w / 2,
+          centroide_y: b.yMin + b.h / 2,
+          area_px2: b.w * b.h
+        }))
+      };
+      prompt("Payload JSON pronto para envio à API REST (Ktor):", JSON.stringify(payload, null, 2));
+    });
+  </script>
+</body>
+</html>

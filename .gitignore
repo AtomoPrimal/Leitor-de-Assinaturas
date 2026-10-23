@@ -1,0 +1,67 @@
+# Built application files
+*.apk
+*.ap_
+*.aab
+*.aar
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated build directories
+bin/
+gen/
+out/
+build/
+app/build/
+server/build/
+**/build/
+
+# Gradle files and caches
+.gradle/
+*/.gradle/
+*/*/.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+.gradletasknamecache
+
+# Local user configuration file (Android SDK path)
+local.properties
+
+# Log Files
+*.log
+
+# Android Studio / IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+.navigation/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Kotlin cache
+.kotlin/
+*/.kotlin/
+**/.kotlin/
+
+# Backend runtime local database and uploaded files
+server_inferences_db.json
+server/server_inferences_db.json
+uploads/
+server/uploads/
+
+# Temporary and local output folders
+tmp/
+output/
+
+# Training raw logs, dataset extracts and PyTorch weights
+Kauan_Almeida*
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+desktop.ini
